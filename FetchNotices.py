@@ -1,15 +1,17 @@
-from bs4 import *
-from requests import *
+from bs4 import BeautifulSoup
+from requests import get
+
 
 def alternateGetTotalNotices(soup):
-    next_page_links = soup.find_all('li',class_='page-link')
+    next_page_links = soup.find_all('li', class_='page-link')
     link = next_page_links[-1].find('a')
     last_page_no = link['data-ci-pagination-page']
     return last_page_no
 
+
 def getTotalNotices(soup):
-    next_page_links = soup.find_all('li',class_='next page-link')
-    last_page_no  =-1
+    next_page_links = soup.find_all('li', class_='next page-link')
+    last_page_no = -1
     for i in next_page_links:
         if 'last' in i.get_text().lower():
             last_page_link = i
@@ -20,32 +22,39 @@ def getTotalNotices(soup):
         last_page_no = alternateGetTotalNotices(soup)
     return int(last_page_no)
 
-def getLinksToNotices(soup,url):
+
+def getLinksToNotices(soup, url):
     totalNotices = getTotalNotices(soup)
-    links=[]
-    for page in range(1,totalNotices+1):
-        links+=[url+'?per_page='+str(page)]
+    links = []
+    for page in range(1, totalNotices+1):
+        links += [url+'?per_page='+str(page)]
     return links
 
+
 def getNotices(notices_url):
-    notices_page = get(notices_url)
-    soup = BeautifulSoup(notices_page.content,'html.parser')
-    NoticesLists = soup.find('ul',class_='list-group list-gr')
+    try:
+        notices_page = get(notices_url)
+    except:
+        print(f"wasn't able to fetch url: {notices_url}")
+
+    soup = BeautifulSoup(notices_page.content, 'html.parser')
+    NoticesLists = soup.find('ul', class_='list-group list-gr')
     NoticesLi = NoticesLists.find_all('li')
     Notices = []
     for notice in NoticesLi:
-        link = notice.find('a',href=True)
+        link = notice.find('a', href=True)
         href = link['href']
         text = link.get_text()
-        date = text[:text.index(' ')].replace('\xa0','')
+        date = text[:text.index(' ')].replace('\xa0', '')
         title = text[text.index(' ')+1:]
         Notices += [
             {
-                "date":date,
-                "title":title,
-                "link":href
+                "date": date,
+                "title": title,
+                "link": href
             }]
     return Notices
+
 
 def getAllNoticesFromLinks(linksToNotices):
     Notices = []
@@ -55,9 +64,12 @@ def getAllNoticesFromLinks(linksToNotices):
 
 
 def getNoticesFromBaseUrl(url):
-    page = get(url)
-    soup = BeautifulSoup(page.content,'html.parser')
+    try:
+        page = get(url)
+    except:
+        print(f"wasn't able to make get request to {url}")
+        return []
+    soup = BeautifulSoup(page.content, 'html.parser')
 
-    linksToNotices = getLinksToNotices(soup,url)
+    linksToNotices = getLinksToNotices(soup, url)
     return getAllNoticesFromLinks(linksToNotices)
-

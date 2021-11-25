@@ -19,9 +19,10 @@ def getCategoryNotice(category_url, category_name):
     AllNotices.update(category_notice)
     end = time.time()
     print(
-        f"Completed fetching notices for url: {category_url} in {end-start} seconds...")
+        f"Completed fetching notices for url: {category_url} in {int((end-start)//60)} minutes & {int((end-start)%60)} seconds...")
 
 
+print("Getting Categories")
 try:
     response = get(baseurl)
     print("got categories!")

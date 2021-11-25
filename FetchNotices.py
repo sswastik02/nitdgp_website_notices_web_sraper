@@ -1,5 +1,7 @@
 from bs4 import BeautifulSoup
 from requests import get
+from ThreadwithRet import ThreadWithReturnValue
+import time
 
 
 def alternateGetTotalNotices(soup):
@@ -35,7 +37,8 @@ def getNotices(notices_url):
     try:
         notices_page = get(notices_url)
     except:
-        print(f"wasn't able to fetch url: {notices_url}")
+        print(f"wasn't able to fetch url: {notices_url} .......... Skipping......")
+        return []
 
     soup = BeautifulSoup(notices_page.content, 'html.parser')
     NoticesLists = soup.find('ul', class_='list-group list-gr')
@@ -58,8 +61,15 @@ def getNotices(notices_url):
 
 def getAllNoticesFromLinks(linksToNotices):
     Notices = []
+    threads = []
     for link in linksToNotices:
-        Notices += getNotices(link)
+        thread = ThreadWithReturnValue(target=getNotices,args=(link,))
+        threads.append(thread)
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        notice = thread.join()
+        Notices += notice
     return Notices
 
 
@@ -67,7 +77,7 @@ def getNoticesFromBaseUrl(url):
     try:
         page = get(url)
     except:
-        print(f"wasn't able to make get request to {url}")
+        print(f"wasn't able to make get request to {url} .......... Skipping......")
         return []
     soup = BeautifulSoup(page.content, 'html.parser')
 
